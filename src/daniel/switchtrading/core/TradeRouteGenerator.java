@@ -209,6 +209,11 @@ public class TradeRouteGenerator {
 			
 			if (counter % 10000 == 0) {
 				System.out.println(String.format("%s / %s", counter, generatedTradeRoutes.size()));
+				if (counter == 438000) {
+					System.out.println("Why you break here");
+					
+				}
+				
 			}
 			
 			try {
