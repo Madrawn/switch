@@ -56,5 +56,9 @@ public class PricedTradeStep extends TradeStep {
 	public void setInAmount(double outAmount) {
 		inAmount = outAmount;
 	}
+	public void cleanTrades() {
+
+		this.trades = new ArrayList<>();
+	}
 
 }

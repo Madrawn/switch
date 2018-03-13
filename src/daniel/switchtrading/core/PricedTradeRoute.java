@@ -1,16 +1,15 @@
 package daniel.switchtrading.core;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class PricedTradeRoute extends TradeRoute {
 
 	
-	public PricedTradeRoute(List<TradeStep> list) {
+	public PricedTradeRoute(List<PricedTradeStep> list) {
 		super(list);
 	}
 
-	public PricedTradeRoute(TradeStep start) {
+	public PricedTradeRoute(PricedTradeStep start) {
 		super(start);
 	}
 

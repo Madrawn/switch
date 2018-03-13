@@ -2,11 +2,11 @@ package daniel.switchtrading.core;
 
 public class Trade {
 	
-	public Trade(double inAmountLeft, float price2, boolean fromBase) {
+	public Trade(double inAmountLeft, double price2, boolean fromBase) {
 		this.in = inAmountLeft;
 		this.price = price2;
 		this.fromBase = fromBase;
-		out = fromBase ? in / price : in * price;
+		out = fromBase ? (in / price)*0.998 : (in * price)*0.998;
 		
 	}
 	@Override

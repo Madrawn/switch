@@ -9,23 +9,23 @@ import com.modeliosoft.modelio.javadesigner.annotations.objid;
 @objid("f11ce54f-7d56-4f8c-a9f3-e6a8df692444")
 public class TradeRoute {
 
-	private List<TradeStep> steps = new LinkedList<>();
+	private List<PricedTradeStep> steps = new LinkedList<>();
 
 	@objid("2252be15-85f5-4152-93e0-9fbb42c1bb86")
-	public TradeRoute(TradeStep in) {
+	public TradeRoute(PricedTradeStep in) {
 		steps.add(in);
 	}
 
-	public TradeRoute(List<TradeStep> list) {
+	public TradeRoute(List<PricedTradeStep> list) {
 		steps = new LinkedList<>(list);
 	}
 
-	public TradeStep getFirst() {
+	public PricedTradeStep getFirst() {
 		// TODO Auto-generated method stub
 		return this.steps.get(0);
 	}
 
-	public void addStep(TradeStep end) throws Exception {
+	public void addStep(PricedTradeStep end) throws Exception {
 		Currency tailC = steps.get(steps.size() - 1).to;
 
 		if (tailC.equals(end.from)) {
@@ -77,7 +77,7 @@ public class TradeRoute {
 		return true;
 	}
 
-	public List<TradeStep> getList() {
+	public List<PricedTradeStep> getList() {
 		// TODO Auto-generated method stub
 		return steps;
 	}

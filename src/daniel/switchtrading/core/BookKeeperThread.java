@@ -15,19 +15,22 @@ public class BookKeeperThread implements Runnable {
 	private ExchangeWrapper exchange;
 
 	public BookKeeperThread(ExchangeWrapper exchange, int numHops,
-			Currency startCurrency) {
+			Currency startCurrency, double inAmount) {
 		this.exchange = exchange;
 		this.numHops = numHops;
 		this.startCurrency = startCurrency;
+		this.inAmount = inAmount;
 	}
 
 	public boolean stop;
 	private Currency startCurrency;
 	private int numHops;
-	private Vector<ActionListener> listeners;
+	private Vector<ActionListener> listeners = new Vector<>();
+	private Set<CurrencyPair> badPairs = new HashSet<>();
+	private double inAmount;
 
 	public void addListener(ActionListener p) {
-
+		listeners.addElement(p);
 	}
 
 	@Override
@@ -56,7 +59,6 @@ public class BookKeeperThread implements Runnable {
 
 			TreeMap<Double, TradeRoute> profitRoutes = new TreeMap<Double, TradeRoute>();
 
-			Set<CurrencyPair> badPairs = new HashSet<>();
 			int counter = 0;
 			for (PricedTradeRoute route : trg.generatedTradeRoutes) {
 				counter++;
@@ -65,33 +67,39 @@ public class BookKeeperThread implements Runnable {
 							trg.generatedTradeRoutes.size()));
 
 				}
-				if (!route.contains(badPairs)) {
+				boolean notFoundBadPair = (!route.contains(badPairs) && !route.contains(exchange.deadPairs));
+				if (notFoundBadPair) {
 					try {
 						TradeRouteEvaluator tre = new DepthTradeRouteEvaluator(
 								exchange);
 
-						double in = 0.001;
+						double in = inAmount;
 						route.setInAmount(in);
-						double out = tre.evaluate(route);
+						double out = tre.evaluate(route,false);
 						if (out == 0) {
 							// remove all routes containing the problem currency
 						}
 						if (in < out) {
 							profitRoutes.put(out, route);
-							
+
 							for (ActionListener actionListener : listeners) {
-								ActionEvent e = new ActionEvent(route, 0, "foundRoute"+out);
+								ActionEvent e = new ActionEvent(route, 0,
+										"foundRoute" + out);
 								actionListener.actionPerformed(e);
 							}
-							
-							//System.out.println("Found! " + out + "\n" + route);
+
+							// System.out.println("Found! " + out + "\n" +
+							// route);
 						}
 					} catch (TooFewPositionsException e) {
-						e.printStackTrace();
+						// e.printStackTrace();
 						System.out.println("Adding " + e.getCauseCurrency());
-						if (!badPairs.add(e.getCauseCurrency()))
+						if (!badPairs.add(e.getCauseCurrency())) {
 							System.out.println("Already added "
 									+ e.getCauseCurrency());
+							
+							System.out.println("SanityCheck: "+ route.contains(badPairs)+" "+ route.contains(e.getCauseCurrency()));
+						}
 						System.out.println("Number of bad pairs = "
 								+ badPairs.size());
 
@@ -100,7 +108,7 @@ public class BookKeeperThread implements Runnable {
 						e.printStackTrace();
 					}
 				} else {
-					// System.out.println("Skipped because of bad Pair");
+					//System.out.println("Skipped because of bad Pair");
 					;
 				}
 

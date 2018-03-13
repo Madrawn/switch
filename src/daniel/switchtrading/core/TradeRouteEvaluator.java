@@ -30,14 +30,14 @@ public class TradeRouteEvaluator {
 			ExchangeWrapper exchangeWrapper2 = new Yobit();
 			TradeRouteEvaluator eval = new TradeRouteEvaluator(exchangeWrapper2);
 
-			System.out.println("NON-Depth: " + eval.evaluate(tr));
+			System.out.println("NON-Depth: " + eval.evaluate(tr,false));
 			 start = new PricedTradeStep(btc, ltc, new CurrencyPair(ltc, btc), 1);
 			 end = start.returnInverse();
 
 			 tr = new PricedTradeRoute(start);
 			tr.addStep(end);
 			eval = new DepthTradeRouteEvaluator(exchangeWrapper2);
-			System.out.println("Depth: " + eval.evaluate(tr));
+			System.out.println("Depth: " + eval.evaluate(tr,false));
 			System.out.println(tr.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -58,16 +58,28 @@ public class TradeRouteEvaluator {
 	}
 
 	@objid("b5bc1023-bf75-49ea-b62f-17b04636ec7c")
-	public double evaluate(final PricedTradeRoute tradeRoute)
+	public double evaluate(final PricedTradeRoute tradeRoute,boolean reDo)
 			throws Exception {
 		// System.out.println("CalcOut - Start \nAmount: " + d);
 		double outAmount = 0;
 
 		for (int i = 0; i < tradeRoute.getList().size(); i++) {
 			PricedTradeStep curStep = (PricedTradeStep) tradeRoute.getList().get(i);
-			TradeBook tradeBook = exchangeWrapper.getTradeBook(curStep.from,
-					curStep.to);
+			TradeBook tradeBook;
+			if (reDo) {
+				Thread.sleep(500);
+				tradeBook = exchangeWrapper.updateAndGetTradeBook(curStep.from,
+						curStep.to);
+			}else {
+				tradeBook = exchangeWrapper.getTradeBook(curStep.from,
+						curStep.to);
+				
+			}
 			outAmount = calcOut(curStep, tradeBook, curStep.from, curStep.to);
+			//if out is too small abort and return 0
+			if (outAmount< 0.0001) {
+				return 0;
+			}
 			if (i+1 < tradeRoute.getList().size()) {
 				((PricedTradeStep) tradeRoute.getList().get(i+1)).setInAmount(outAmount);
 				
@@ -92,11 +104,11 @@ public class TradeRouteEvaluator {
 		double result;
 		if (isFromBase) {
 			// we buy so get lowest ask
-			float price = tradeBook.getLowestAsk().getPrice();
+			double price = tradeBook.getLowestAsk().getPrice();
 			result = step.getInAmountLeft() / price;
 			step.addTrade(new Trade(step.getInAmountLeft(), price,isFromBase));
 		} else {
-			float price = tradeBook.getHighestBid().getPrice();
+			double price = tradeBook.getHighestBid().getPrice();
 			result = step.getInAmountLeft() * price;
 			step.addTrade(new Trade(step.getInAmountLeft(), price,isFromBase));
 

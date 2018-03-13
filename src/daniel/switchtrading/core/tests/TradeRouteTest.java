@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import daniel.switchtrading.core.Currency;
 import daniel.switchtrading.core.CurrencyPair;
+import daniel.switchtrading.core.PricedTradeStep;
 import daniel.switchtrading.core.TradeRoute;
 import daniel.switchtrading.core.TradeStep;
 
@@ -30,7 +31,7 @@ public class TradeRouteTest {
 		ltc_doge = new CurrencyPair(ltc, doge);
 		CurrencyPair eth_doge = new CurrencyPair(eth, doge);
 		
-		TradeStep in = new TradeStep(btc, ltc, ltc_btc);
+		PricedTradeStep in = new PricedTradeStep(btc, ltc, ltc_btc, 0);
 		
 		test = new TradeRoute(in);
 		

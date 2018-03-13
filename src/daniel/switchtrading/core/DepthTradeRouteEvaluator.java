@@ -21,6 +21,7 @@ public class DepthTradeRouteEvaluator extends TradeRouteEvaluator {
 		float outAmount = 0;
 		TreeSet<Position> tempSet = null;
 		double newAmount;
+		step.cleanTrades();
 		while (step.getInAmountLeft() > 0.0) {
 			TooFewPositionsException exception = new TooFewPositionsException("To few positions", tradeBook.getCurrencyPair());
 			if (isFromBase) {
@@ -38,15 +39,15 @@ public class DepthTradeRouteEvaluator extends TradeRouteEvaluator {
 					throw exception;
 				}
 				double inLeft = step.getInAmountLeft();
-				float fillable = pos.getSize() * pos.getPrice();
+				double fillable = pos.getSize() * pos.getPrice();
 				newAmount = inLeft - fillable;
 				//System.out.println(String.format("%s = %s - %s | %s", newAmount, inAmount, pos.getSize(), pos));
 				if (newAmount <= 0) {
-					outAmount += step.getInAmountLeft() / pos.getPrice();
+					outAmount += (step.getInAmountLeft() / pos.getPrice())*0.998;
 					step.addTrade(new Trade(step.getInAmountLeft(), pos.getPrice(),isFromBase));
 
 				} else {
-					outAmount += pos.getSize() / pos.getPrice();
+					outAmount += (pos.getSize() / pos.getPrice())*0.998;
 					step.addTrade(new Trade(fillable, pos.getPrice(),isFromBase));
 					
 				}
@@ -67,13 +68,13 @@ public class DepthTradeRouteEvaluator extends TradeRouteEvaluator {
 				newAmount = left - pos.getSize();
 				//System.out.println(String.format("%s = %s - %s | %s", newAmount, inAmount, pos.getSize(), pos));
 				if (newAmount <= 0) {
-					outAmount += step.getInAmountLeft() * pos.getPrice();
+					outAmount += (step.getInAmountLeft() * pos.getPrice())*0.998;
 					step.addTrade(new Trade(step.getInAmountLeft(), pos.getPrice(),isFromBase));
 
 				} else {
 					
 					
-					outAmount += pos.getSize() * pos.getPrice();
+					outAmount += (pos.getSize() * pos.getPrice())*0.998;
 					step.addTrade(new Trade(pos.getSize(), pos.getPrice(),isFromBase));
 				}
 
