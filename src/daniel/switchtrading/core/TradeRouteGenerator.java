@@ -3,6 +3,7 @@ package daniel.switchtrading.core;
 import gnu.trove.set.hash.THashSet;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,83 +27,55 @@ public class TradeRouteGenerator {
 	public Set<PricedTradeRoute> generatedTradeRoutes = new THashSet<PricedTradeRoute>();
 
 	public static void main(String[] args) {
-
-		ExchangeWrapper y;
-		try {
-			y = new Yobit();
-			Set<CurrencyPair> pairsToUse = y.getAllPairs();
-			pairsToUse.removeIf((x) -> !(x.getBaseCurrency().equals(
-					new Currency("btc"))
-					|| x.getBaseCurrency().equals(new Currency("eth"))
-					/* || x.getBaseCurrency().equals(new Currency("waves")) */
-					|| x.getBaseCurrency().equals(new Currency("usd"))
-					|| x.getBaseCurrency().equals(new Currency("rur")) || x
-					.getBaseCurrency().equals(new Currency("doge"))));
-			y.getTradeBooks(pairsToUse);
-			Set<CurrencyPair> cleanPairs = y.cleanDeadPairs();
-			TradeRouteGenerator trg = new TradeRouteGenerator(cleanPairs);
-			trg.mixAll(Integer.parseInt(args[0]), new Currency("btc"));
-			// System.out.println(trg);
-
-			TreeMap<Double, TradeRoute> profitRoutes = new TreeMap<Double, TradeRoute>();
-
-			Set<CurrencyPair> badPairs = new THashSet<>();
-			int counter = 0;
-			for (PricedTradeRoute route : trg.generatedTradeRoutes) {
-				counter++;
-				if (counter % 1000 == 0) {
-					System.out.println(String.format("%s/%s", counter,
-							trg.generatedTradeRoutes.size()));
-
-				}
-				if (!route.contains(badPairs)) {
-					try {
-						TradeRouteEvaluator tre = new DepthTradeRouteEvaluator(
-								y);
-
-						double in = 0.001;
-						route.setInAmount(in);
-						double out = tre.evaluate(route,false);
-						if (out == 0) {
-							// remove all routes containing the problem currency
-						}
-						if (in < out) {
-							profitRoutes.put(out, route);
-							System.out.println("Found! " + out + "\n" + route);
-						}
-					} catch (TooFewPositionsException e) {
-						e.printStackTrace();
-						System.out.println("Adding " + e.getCauseCurrency());
-						if (!badPairs.add(e.getCauseCurrency()))
-							System.out.println("Already added "
-									+ e.getCauseCurrency());
-						System.out.println("Number of bad pairs = "
-								+ badPairs.size());
-
-					}
-				} else {
-					// System.out.println("Skipped because of bad Pair");
-					;
-				}
-
-			}
-			System.out.println("FINISHED");
-
-			profitRoutes.forEach((d, r) -> {
-				System.out.println(String.format("%s -----------\n%s", d,
-						((PricedTradeRoute) r)));
-			});
-
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch blocky
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		/*
+		 * ExchangeWrapper y; try { y = new Yobit(); Set<CurrencyPair>
+		 * pairsToUse = y.getAllPairs(); pairsToUse.removeIf((x) ->
+		 * !(x.getBaseCurrency().equals( new Currency("btc")) ||
+		 * x.getBaseCurrency().equals(new Currency("eth")) /* ||
+		 * x.getBaseCurrency().equals(new Currency("waves")) ||
+		 * x.getBaseCurrency().equals(new Currency("usd")) ||
+		 * x.getBaseCurrency().equals(new Currency("rur")) || x
+		 * .getBaseCurrency().equals(new Currency("doge"))));
+		 * y.getTradeBooks(pairsToUse); Set<CurrencyPair> cleanPairs =
+		 * y.cleanDeadPairs(); TradeRouteGenerator trg = new
+		 * TradeRouteGenerator(cleanPairs);
+		 * trg.mixAll(Integer.parseInt(args[0]), new Currency("btc")); //
+		 * System.out.println(trg);
+		 * 
+		 * TreeMap<Double, TradeRoute> profitRoutes = new TreeMap<Double,
+		 * TradeRoute>();
+		 * 
+		 * Set<CurrencyPair> badPairs = new THashSet<>(); int counter = 0; for
+		 * (PricedTradeRoute route : trg.generatedTradeRoutes) { counter++; if
+		 * (counter % 1000 == 0) { System.out.println(String.format("%s/%s",
+		 * counter, trg.generatedTradeRoutes.size()));
+		 * 
+		 * } if (!route.contains(badPairs)) { try { TradeRouteEvaluator tre =
+		 * new DepthTradeRouteEvaluator( y);
+		 * 
+		 * BigDecimal in = 0.001; route.setInAmount(in); double out =
+		 * tre.evaluate(route,false); if (out == 0) { // remove all routes
+		 * containing the problem currency } if (in < out) {
+		 * profitRoutes.put(out, route); System.out.println("Found! " + out +
+		 * "\n" + route); } } catch (TooFewPositionsException e) {
+		 * e.printStackTrace(); System.out.println("Adding " +
+		 * e.getCauseCurrency()); if (!badPairs.add(e.getCauseCurrency()))
+		 * System.out.println("Already added " + e.getCauseCurrency());
+		 * System.out.println("Number of bad pairs = " + badPairs.size());
+		 * 
+		 * } } else { // System.out.println("Skipped because of bad Pair"); ; }
+		 * 
+		 * } System.out.println("FINISHED");
+		 * 
+		 * profitRoutes.forEach((d, r) -> {
+		 * System.out.println(String.format("%s -----------\n%s", d,
+		 * ((PricedTradeRoute) r))); });
+		 * 
+		 * } catch (MalformedURLException e) { // TODO Auto-generated catch
+		 * blocky e.printStackTrace(); } catch (IOException e) { // TODO
+		 * Auto-generated catch block e.printStackTrace(); } catch (Exception e)
+		 * { // TODO Auto-generated catch block e.printStackTrace(); }
+		 */
 	}
 
 	@objid("d06e4885-36c6-4548-b43a-338eeccab67c")
@@ -120,10 +93,10 @@ public class TradeRouteGenerator {
 			}
 			allPossibleTradeSteps.add(new PricedTradeStep(currencyPair
 					.getBaseCurrency(), currencyPair.getSecondCurrency(),
-					currencyPair, 0));
+					currencyPair, BigDecimal.ZERO));
 			allPossibleTradeSteps.add(new PricedTradeStep(currencyPair
 					.getSecondCurrency(), currencyPair.getBaseCurrency(),
-					currencyPair, 0));
+					currencyPair, BigDecimal.ZERO));
 		}
 
 		Set<PricedTradeRoute> workTradeRoutes = new THashSet<>();
@@ -236,14 +209,17 @@ public class TradeRouteGenerator {
 									if (!availablePairs.contains(relevantPair)) {
 										relevantPair = new CurrencyPair(start,
 												tradeRoute.getTailCurrency());
-										if (!availablePairs.contains(relevantPair)) {
+										if (!availablePairs
+												.contains(relevantPair)) {
 											relevantPair = new CurrencyPair(
-													tradeRoute.getTailCurrency(), start);
+													tradeRoute
+															.getTailCurrency(),
+													start);
 										}
 									}
 									tradeRoute.addStep(new PricedTradeStep(
 											tradeRoute.getTailCurrency(),
-											start, relevantPair, 0));
+											start, relevantPair, BigDecimal.ZERO));
 								} catch (Exception e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();

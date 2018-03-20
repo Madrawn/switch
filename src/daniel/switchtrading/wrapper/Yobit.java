@@ -9,6 +9,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -66,8 +68,10 @@ public class Yobit extends ExchangeWrapper {
 		TradeBook testBook = new TradeBook(null, null, pair);
 
 		if (tradeBooks.contains(testBook)) {
+			//System.out.println("Return old TB");
 			return tradeBooks.get(tradeBooks.indexOf(testBook));
 		}
+		System.out.println("Getting new TB");
 
 		String targetString = pair.getSecondCurrency().getToken() + "_"
 				+ pair.getBaseCurrency().getToken();
@@ -87,6 +91,12 @@ public class Yobit extends ExchangeWrapper {
 		TreeSet<Position> asksSet = generateDepthSet(asks, false);
 		TreeSet<Position> bidsSet = generateDepthSet(bids, true);
 		TradeBook tb = new TradeBook(asksSet, bidsSet, pair);
+		// SanityCheck
+		if (tb.getAsks().first().getPrice().compareTo(tb.getBids().first().getPrice()) < 0) {
+			System.out
+					.println("Ask price is lower than bid price which is impossible");
+		}
+
 		if (!tradeBooks.contains(tb)) {
 			tradeBooks.add(tb);
 		}
@@ -116,7 +126,7 @@ public class Yobit extends ExchangeWrapper {
 	 */
 	protected URLConnection processHeaders(URLConnection openConnection)
 			throws MalformedURLException, IOException {
-		System.out.println("Processing headers");
+		// System.out.println("Processing headers");
 		String tmp = openConnection.getHeaderField("Retry-After");
 		if (tmp != null) {
 			int ttw = Integer.parseInt(tmp);
@@ -142,7 +152,7 @@ public class Yobit extends ExchangeWrapper {
 	protected URLConnection setupConnection(String completeURL)
 			throws MalformedURLException, IOException {
 		try {
-			Thread.sleep(500);
+			Thread.sleep(700);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -187,7 +197,7 @@ public class Yobit extends ExchangeWrapper {
 
 			pairs.forEach((textPair, value) -> {
 				// System.out.println(textPair);
-				if (textPair.equals("edr2_ltc")) {
+				if (textPair.contains("edr2") || textPair.contains("rocket") ) {
 
 				} else {
 					String[] split = textPair.split("_");
@@ -214,6 +224,11 @@ public class Yobit extends ExchangeWrapper {
 			this.baseCurrencies = backSet;
 
 		}
+		if (this.allPairs == null) {
+			return getAllPairs();
+		}
+		
+		
 		return this.allPairs;
 	}
 
@@ -221,8 +236,8 @@ public class Yobit extends ExchangeWrapper {
 	private TreeSet<Position> generateDepthSet(JsonArray in, boolean isBid) {
 		TreeSet<Position> result = new TreeSet<>();
 		in.forEach((pos) -> {
-			float size = Float.parseFloat(((JsonArray) pos).get(1).toString());
-			float price = Float.parseFloat(((JsonArray) pos).get(0).toString());
+			BigDecimal size = new BigDecimal(((JsonArray) pos).get(1).toString());
+			BigDecimal price = new BigDecimal(((JsonArray) pos).get(0).toString());
 			Position p = new Position(size, price, isBid);
 			result.add(p);
 		});
@@ -254,57 +269,58 @@ public class Yobit extends ExchangeWrapper {
 		}
 		parameterList = parameterList.substring(0, parameterList.length() - 1);
 		String completeURL = this.apiUrl + depthCmd + parameterList;
-		System.out.println("Complete Url Size: " + completeURL.length());
+		// System.out.println("Complete Url Size: " + completeURL.length());
 		URLConnection openConnection = connect(completeURL);
 		try {
 			InputStream inputStream = openConnection.getInputStream();
-		JsonObject depth;
-		try {
-			depth = Json.createReader(inputStream).readObject();
+			JsonObject depth;
+			try {
+				depth = Json.createReader(inputStream).readObject();
 
-		} catch (Exception e) {
+			} catch (Exception e) {
 
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					inputStream));
-			// System.out.println("why no work");
-			br.lines().forEach((x) -> System.out.println(x));
-			e.printStackTrace();
-			return getTradeBooks(pairs);
-		}
-
-		for (CurrencyPair currencyPair : pairs) {
-
-			JsonObject jo = depth.getJsonObject(currencyPair.toString());
-			if (jo != null) {
-				JsonArray asks, bids;
-				asks = jo.getJsonArray("asks");
-				bids = jo.getJsonArray("bids");
-				TreeSet<Position> asksSet = null;
-
-				if (asks != null) {
-					asksSet = generateDepthSet(asks, false);
-				} else {
-
-					// System.out.println(String.format("no one wants to sell %s",
-					// currencyPair));
-				}
-
-				TreeSet<Position> bidsSet = null;
-				if (bids != null) {
-
-					bidsSet = generateDepthSet(bids, true);
-				} else {
-					// System.out.println(String.format("no one wants to buy %s",
-					// currencyPair));
-
-				}
-				TradeBook tb = new TradeBook(asksSet, bidsSet, currencyPair);
-				result.add(tb);
-			} else {
-				System.out.println(String.format(
-						"couldn't retrive asks and bids for %s", currencyPair));
+				BufferedReader br = new BufferedReader(new InputStreamReader(
+						inputStream));
+				// System.out.println("why no work");
+				br.lines().forEach((x) -> System.out.println(x));
+				e.printStackTrace();
+				return getTradeBooks(pairs);
 			}
-		}
+
+			for (CurrencyPair currencyPair : pairs) {
+
+				JsonObject jo = depth.getJsonObject(currencyPair.toString());
+				if (jo != null) {
+					JsonArray asks, bids;
+					asks = jo.getJsonArray("asks");
+					bids = jo.getJsonArray("bids");
+					TreeSet<Position> asksSet = null;
+
+					if (asks != null) {
+						asksSet = generateDepthSet(asks, false);
+					} else {
+
+						// System.out.println(String.format("no one wants to sell %s",
+						// currencyPair));
+					}
+
+					TreeSet<Position> bidsSet = null;
+					if (bids != null) {
+
+						bidsSet = generateDepthSet(bids, true);
+					} else {
+						// System.out.println(String.format("no one wants to buy %s",
+						// currencyPair));
+
+					}
+					TradeBook tb = new TradeBook(asksSet, bidsSet, currencyPair);
+					result.add(tb);
+				} else {
+					System.out.println(String.format(
+							"couldn't retrive asks and bids for %s",
+							currencyPair));
+				}
+			}
 		} catch (SocketTimeoutException e) {
 			return getTradeBooks(pairs);
 		}
@@ -414,8 +430,10 @@ public class Yobit extends ExchangeWrapper {
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("Retrying post request");
+			return postRequest(method, dataMap);
 		}
-		return null;
+		// return null;
 	}
 
 	/**
@@ -428,37 +446,36 @@ public class Yobit extends ExchangeWrapper {
 		JsonObject funds = returns.getJsonObject("funds");
 		for (Entry entry : funds.entrySet()) {
 			Currency cur = new Currency(entry.getKey().toString());
-			double fundsA = ((JsonNumber) entry.getValue()).doubleValue();
-			double fundsA_incl = ((JsonNumber) funds_incl
-					.getJsonNumber((String) entry.getKey())).doubleValue();
+			BigDecimal fundsA = new BigDecimal(entry.getValue().toString());
+			BigDecimal fundsA_incl = funds_incl.getJsonNumber(cur.getToken()).bigDecimalValue();
 			Wallet w = new Wallet();
 			w.currency = cur;
 			w.freeBalance = fundsA;
 			w.totalBalance = fundsA_incl;
-			w.lockedBalance = fundsA_incl - fundsA;
+			w.lockedBalance = fundsA_incl.subtract(fundsA);
 			w.typeOfWallet = TypeOfWallet.EXCHANGE;
 			ub.wallet.add(w);
 		}
 	}
 
 	@Override
-	public OpenOrder doTrade(Currency from, Currency to, double priceThreshold,
-			double amount, CurrencyPair pair) {
+	public OpenOrder doTrade(Currency from, Currency to, BigDecimal priceThreshold,
+			BigDecimal amount, CurrencyPair pair) {
 		String type;
 		// the amount is is the amount of the from currency. but yobit wants to
 		// know how much the not base currency is sold/bought
-		if (from.equals(new Currency("btc")) && amount > 0.01) {
+		if (from.equals(new Currency("btc")) && amount.compareTo(new BigDecimal(0.01)) > 0) {
 			System.out.println("Panic Mode!");
 			System.exit(0);
 		}
 		if (from.equals(pair.getBaseCurrency())) {
 			type = "buy";
-			amount = amount / priceThreshold;
+			amount = amount.divide(priceThreshold,MathContext.DECIMAL32);
 		} else {
 			type = "sell";
 		}
 		// TODO: quickfix for 0.2% fee
-		amount *= 0.998;
+		amount = amount.multiply(new BigDecimal(0.998));
 		String pairAsString = pair.toString();
 		if (pairAsString.equals("rur_btc") || pairAsString.equals("usd_btc")) {
 			System.out.println("Had to swap rur/usd with btc base");
@@ -467,8 +484,8 @@ public class Yobit extends ExchangeWrapper {
 		}
 
 		OpenOrder placedOrder = placeTrade(pairAsString, type,
-				String.format(Locale.ROOT, "%.9f", priceThreshold),
-				String.format(Locale.ROOT, "%.9f", amount));
+				String.format(Locale.ROOT, "%.12f", priceThreshold),
+				String.format(Locale.ROOT, "%.12f", amount));
 		System.out.println("Trade done");
 		return placedOrder;
 	}
@@ -486,14 +503,13 @@ public class Yobit extends ExchangeWrapper {
 		if (success == 0) {
 			System.out.println("Trade failed");
 			System.out.println(result.toString());
-			System.exit(0);
+			//System.exit(0);
 		} else {
 
 			OpenOrder o = new OpenOrder();
 			JsonObject returns = result.getJsonObject("return");
 			o.ID = returns.getJsonNumber(("order_id")).longValue();
-			o.position = new Position(returns.getJsonNumber(("remains"))
-					.doubleValue(), Double.parseDouble(rate),
+			o.position = new Position(new BigDecimal(returns.getJsonNumber(("remains")).doubleValue()), new BigDecimal(rate),
 					type.equals("buy"));
 			openOrders.add(o);
 			System.out.println(o);

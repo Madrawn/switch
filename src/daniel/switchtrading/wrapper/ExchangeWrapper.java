@@ -3,6 +3,7 @@ package daniel.switchtrading.wrapper;
 import gnu.trove.set.hash.THashSet;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,7 +24,7 @@ public abstract class ExchangeWrapper implements API {
 	 * @return
 	 */
 	public static long getNonce() {
-		long nonce = (System.currentTimeMillis()/100) % 1000000000;
+		long nonce = (System.currentTimeMillis() / 100) % 1000000000;
 		return nonce;
 	}
 
@@ -41,7 +42,7 @@ public abstract class ExchangeWrapper implements API {
 
 	protected List<TradeBook> tradeBooks = new ArrayList<>();
 
-	protected List<OpenOrder> openOrders  = new ArrayList<>();;
+	protected List<OpenOrder> openOrders = new ArrayList<>();;
 
 	@objid("02e0694b-9a05-4100-8b0b-b11e647d9922")
 	public ExchangeWrapper() {
@@ -82,18 +83,26 @@ public abstract class ExchangeWrapper implements API {
 
 		return getTradeBook(p);
 	}
-	
-	public TradeBook updateAndGetTradeBook(CurrencyPair pair) throws IOException{
+
+	public TradeBook updateAndGetTradeBook(CurrencyPair pair)
+			throws IOException {
 		TradeBook tmp = new TradeBook(null, null, pair);
 		tradeBooks.remove(tmp);
-		
-		
+
 		return getTradeBook(pair);
 	}
-	
+
 	public Set<CurrencyPair> deadPairs = new HashSet<>();
 
 	public Set<CurrencyPair> cleanDeadPairs() {
+		if (allPairs == null) {
+			try {
+				getAllPairs();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		Set<CurrencyPair> alivePairs = new THashSet<>(allPairs);
 		for (TradeBook tradeBook : tradeBooks) {
 			if (tradeBook.getBids() == null) {
@@ -107,8 +116,10 @@ public abstract class ExchangeWrapper implements API {
 				CurrencyPair deadPair = tradeBook.getCurrencyPair();
 				deadPairs.add(deadPair);
 				boolean removed = alivePairs.remove(deadPair);
-				System.out.println(String.format(
-						"Removed dead pair %s from asks", deadPair));
+				/*
+				 * System.out.println(String.format(
+				 * "Removed dead pair %s from asks", deadPair));
+				 */
 			}
 		}
 		return alivePairs;
@@ -124,8 +135,8 @@ public abstract class ExchangeWrapper implements API {
 	public abstract void setupAuth();
 
 	public abstract OpenOrder doTrade(Currency from, Currency to,
-			double priceThreshold, double amount, CurrencyPair pair);
-	
+			BigDecimal priceThreshold, BigDecimal amount, CurrencyPair pair);
+
 	public abstract UserBalance getUserBalance();
 
 	public void closeAllTrades() {
@@ -133,7 +144,7 @@ public abstract class ExchangeWrapper implements API {
 		for (OpenOrder openOrder : openOrders) {
 			closeOrder(openOrder.ID);
 		}
-		
+
 	}
 
 	public abstract boolean closeOrder(long iD);
@@ -142,13 +153,14 @@ public abstract class ExchangeWrapper implements API {
 		return this.openOrders;
 	}
 
-	public TradeBook updateAndGetTradeBook(Currency from, Currency to) throws Exception {
+	public TradeBook updateAndGetTradeBook(Currency from, Currency to)
+			throws Exception {
 		CurrencyPair p = getAccordingPair(from, to);
-		
-		
+
 		TradeBook tmp = new TradeBook(null, null, p);
+		System.out.println("Deleting TradeBook of " + p);
 		tradeBooks.remove(tmp);
-		
+
 		return getTradeBook(p);
 	}
 

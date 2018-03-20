@@ -1,11 +1,12 @@
 package daniel.switchtrading.core;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PricedTradeStep extends TradeStep {
 
-	private double inAmount;
+	private BigDecimal inAmount;
 	
 	private List<Trade> trades = new ArrayList<>();
 
@@ -17,7 +18,7 @@ public class PricedTradeStep extends TradeStep {
 		return inAmount;
 	}
 */
-	public PricedTradeStep(Currency from, Currency to, CurrencyPair relevantPair, double amountIn) {
+	public PricedTradeStep(Currency from, Currency to, CurrencyPair relevantPair, BigDecimal amountIn) {
 		super(from, to, relevantPair);
 		this.inAmount = amountIn;
 	}
@@ -26,10 +27,10 @@ public class PricedTradeStep extends TradeStep {
 		trades.add(t);
 	}
 
-	public double getInAmountLeft() {
-		double result = inAmount;
+	public BigDecimal getInAmountLeft() {
+		BigDecimal result = inAmount;
 		for (Trade trade : trades) {
-			result -= trade.in;
+			result = result.subtract(trade.in);
 		}
 		return result;
 	}
@@ -39,10 +40,10 @@ public class PricedTradeStep extends TradeStep {
 		return new PricedTradeStep(to, from, relevantPair, inAmount);
 	}
 
-	public double getOutSum() {
-		double result = 0;
+	public BigDecimal getOutSum() {
+		BigDecimal result = BigDecimal.ZERO;
 		for (Trade trade : trades) {
-			result += trade.out;
+			result = result.add(trade.out);
 		}
 		return result;
 	}
@@ -53,7 +54,7 @@ public class PricedTradeStep extends TradeStep {
 		return super.toString() + "\ninAmount: " + inAmount+ "\n" + trades.toString(); 
 	}
 
-	public void setInAmount(double outAmount) {
+	public void setInAmount(BigDecimal outAmount) {
 		inAmount = outAmount;
 	}
 	public void cleanTrades() {

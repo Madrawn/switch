@@ -1,5 +1,7 @@
 package daniel.switchtrading.core;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -104,6 +106,15 @@ public class TradeRoute {
 			}
 		}
 		return false;
+	}
+	
+	public Collection<? extends CurrencyPair> getCurrencyPairsContained() {
+		Set<CurrencyPair> result = new HashSet<>();
+		
+		for (PricedTradeStep e : steps) {
+			result.add(e.relevantPair);
+		}
+		return result;
 	}
 
 
