@@ -65,7 +65,8 @@ public class TradeRouteEvaluator {
 			curStep.cleanTrades();
 			TradeBook tradeBook;
 			if (reDo) {
-				Thread.sleep(500);
+				//shouldnt we do this in the wrapper?
+				//Thread.sleep(500);
 				tradeBook = exchangeWrapper.updateAndGetTradeBook(curStep.from,
 						curStep.to);
 			} else {

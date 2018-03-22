@@ -161,7 +161,8 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 					execute(toCheckRoute);
 				} else {
 				}
-				Thread.sleep(100);
+				//shouldn't we do this in the wrapper?
+				//Thread.sleep(100);
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
