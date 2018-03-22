@@ -6,7 +6,7 @@ import java.math.RoundingMode;
 import com.modeliosoft.modelio.javadesigner.annotations.objid;
 
 @objid ("c2e47c57-756e-4eb2-8242-48144eab9dc9")
-public class Position implements Comparable {
+public class Position implements Comparable<Position> {
     @objid ("e81f7a28-2c22-42e0-ac29-3434256a7951")
     private BigDecimal size;
 
@@ -23,7 +23,7 @@ public class Position implements Comparable {
     }
 
     @objid ("714fa691-723d-4b2a-b307-5a62a0fc5c1c")
-    public int compareTo(Object p0) {
+    public int compareTo(Position p0) {
         if (p0 instanceof Position) {
             Position other = (Position) p0;
             return !isBid ? this.price.compareTo(other.price) : this.price.negate().compareTo(other.price.negate());
@@ -39,9 +39,9 @@ public class Position implements Comparable {
     }
 
     @objid ("ad4e6c22-0754-4cac-8d2b-a142bc6cdcea")
-    public Position(final BigDecimal d, final BigDecimal e, boolean isBid) {
-        this.size = d;
-        this.price = e;
+    public Position(final BigDecimal size, final BigDecimal price, boolean isBid) {
+        this.size = size;
+        this.price = price;
         this.isBid = isBid;
     }
     

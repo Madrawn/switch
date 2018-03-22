@@ -1,6 +1,7 @@
 package daniel.switchtrading.core;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.modeliosoft.modelio.javadesigner.annotations.objid;
@@ -11,10 +12,10 @@ public class TradeBook {
     private int bookDepth;
 
     @objid ("5bec948d-50d8-436f-a030-421eb9a87d18")
-    private TreeSet<Position> bids = new TreeSet<Position>();
+    private SortedSet<Position> bids = Collections.synchronizedSortedSet(new TreeSet<Position>());
 
     @objid ("3c8b929d-fa6b-42f7-815c-2c4216c18eb3")
-    private TreeSet<Position> asks = new TreeSet<Position>();
+    private SortedSet<Position> asks = Collections.synchronizedSortedSet(new TreeSet<Position>());
 
     @objid ("4b1e540d-c974-45fa-90f8-e9408e913904")
     private CurrencyPair currencyPair;
@@ -30,6 +31,10 @@ public class TradeBook {
         this.asks = asks;
         this.bids = bids;
     }
+	public TradeBook(CurrencyPair target) {
+		this.currencyPair = target;
+		this.bookDepth =asks != null ? asks.size() : 0;
+	}
 
     @objid ("4c0a5fa2-ac7f-459c-aca6-39666e46899a")
     @Override
@@ -65,12 +70,12 @@ public class TradeBook {
 		return bids.first();
 	}
 
-	public TreeSet<Position> getAsks() {
+	public SortedSet<Position> getAsks() {
 		// TODO Auto-generated method stub
 		return this.asks;
 	}
 
-	public TreeSet<Position> getBids() {
+	public SortedSet<Position> getBids() {
 		// TODO Auto-generated method stub
 		return this.bids;
 	}

@@ -529,4 +529,10 @@ public class Yobit extends ExchangeWrapper {
 		});
 		return success == 1;
 	}
+
+	@Override
+	public BigDecimal getFeeTolerance() {
+		// TODO Auto-generated method stub
+		return new BigDecimal(1.003);
+	}
 }

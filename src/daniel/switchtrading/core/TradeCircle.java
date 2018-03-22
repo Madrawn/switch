@@ -18,6 +18,7 @@ import javax.swing.JOptionPane;
 
 import com.modeliosoft.modelio.javadesigner.annotations.objid;
 
+import daniel.switchtrading.wrapper.Bitfinex;
 import daniel.switchtrading.wrapper.ExchangeWrapper;
 
 @objid("03713d1d-54c9-4ebe-a27b-5c110e0f7b6a")
@@ -29,6 +30,19 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 		try {
 			ExchangeWrapper exchange = (ExchangeWrapper) Class.forName(
 					"daniel.switchtrading.wrapper." + args[2]).newInstance();
+			
+			if (exchange instanceof Bitfinex) {
+				try {
+					exchange.getTradeBooks(exchange.getAllPairs());
+					wrapper = exchange;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 
 			BookKeeperThread target2 = new BookKeeperThread(exchange, numHops,
 					startCur, inAmount);
@@ -39,7 +53,9 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 			target2.addListener(target);
 
 			// SwingUtilities.invokeLater(target);
+			
 
+			
 			Thread c = new Thread(target);
 			c.setDaemon(false);
 			c.start();
@@ -89,9 +105,13 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 		numHops = Integer.parseInt(args[1]);
 		exchangeName = args[2];
 		try {
+			if (wrapper == null) {
+				
 			wrapper = (ExchangeWrapper) Class.forName(
 					"daniel.switchtrading.wrapper." + exchangeName)
 					.newInstance();
+			}
+			
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -111,13 +131,17 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 	public void actionPerformed(ActionEvent e) {
 		synchronized (tradesToCheck) {
 
+			PricedTradeRoute source = (PricedTradeRoute) e.getSource();
 			System.out.println("Putting new route");
+			if (tradesToCheck.contains(source)) {
+				tradesToCheck.remove(source);
+			}
 			int freeCap = tradesToCheck.remainingCapacity();
 			System.out.println("Free Capacity: " + freeCap);
 			if (freeCap == 0) {
 				tradesToCheck.removeLast();
 			}
-			tradesToCheck.offerFirst((PricedTradeRoute) e.getSource());
+			tradesToCheck.offerFirst(source);
 		}
 	}
 
@@ -137,7 +161,7 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 					execute(toCheckRoute);
 				} else {
 				}
-				Thread.sleep(500);
+				Thread.sleep(100);
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -177,46 +201,6 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 				}
 				Wallet wallet = wrapper.getUserBalance().getWallet(step.from);
 				// int tolerance = 1;
-				int counter = 0;
-				while (wallet == null
-						|| wallet.freeBalance.compareTo(amountSum
-								.multiply(new BigDecimal(0.8))) <= 0) {
-					System.out.println("Waitng for funds " + amountSum);
-					if (wallet != null) {
-						System.out.println("Currently we have: "
-								+ wallet.freeBalance);
-					}
-					Thread.sleep(500);
-					// tolerance--;
-					counter++;
-					if (counter >= 10) {
-						System.out
-								.println(String
-										.format("We have been here %s times something went wrong",
-												counter));
-						if (counter >= 20) {
-							// System.exit(0);
-							abort = true;
-						}
-
-					}
-					try {
-						checkRouteProfit(toCheckRoute);
-						if (!abort) {
-							// tolerance = 5;
-							lastOrder = retrade(toCheckRoute, lastOrder, step);
-						} else if (abort) {
-
-							break;
-
-						}
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					wallet = wrapper.getUserBalance().getWallet(step.from);
-				}
 
 				if (abort) {
 					try {
@@ -235,6 +219,9 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 
 				placeTrade(step, trades, priceThreshold, amount);
 
+				abort = waitForFinishedTrade(toCheckRoute, step,
+						amountSum);
+
 			} else {
 				System.out.println("\nABORTING!\n");
 				if (wrapper != null) {
@@ -243,6 +230,63 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param toCheckRoute
+	 * @param abort
+	 * @param step
+	 * @param amountSum
+	 * @param wallet
+	 * @return
+	 * @throws InterruptedException
+	 */
+	private boolean waitForFinishedTrade(PricedTradeRoute toCheckRoute,
+			PricedTradeStep step, BigDecimal amountSum) throws InterruptedException {
+		int counter = 0;
+		boolean abort = false;
+		Wallet wallet = wrapper.getUserBalance().getWallet(step.to);
+		//we should have about this much
+		BigDecimal toHave = step.getOutSum();
+		while (wallet == null
+				|| wallet.freeBalance.compareTo(toHave
+						.multiply(new BigDecimal(0.8))) <= 0) {
+			System.out.println("Waitng for funds " + amountSum);
+			if (wallet != null) {
+				System.out.println("Currently we have: "
+						+ wallet.freeBalance);
+			}
+			Thread.sleep(500);
+			// tolerance--;
+			counter++;
+			if (counter >= 10) {
+				System.out
+						.println(String
+								.format("We have been here %s times something went wrong",
+										counter));
+				if (counter >= 20) {
+					// System.exit(0);
+					abort = true;
+				}
+
+			}
+			try {
+				checkRouteProfit(toCheckRoute);
+				if (!abort) {
+					// tolerance = 5;
+					lastOrder = retrade(toCheckRoute, lastOrder, step);
+				} else if (abort) {
+
+					break;
+
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		return abort;
 	}
 
 	private OpenOrder retrade(PricedTradeRoute toCheckRoute,
@@ -319,12 +363,14 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 		try {
 			// now get relevant tradebooks with a new wrapper so we get most
 			// recent books
+			/*
 			ExchangeWrapper altWrapper = (ExchangeWrapper) Class.forName(
 					"daniel.switchtrading.wrapper." + exchangeName)
 					.newInstance();
-			altWrapper.getTradeBooks(pairsToCheck);
+			*/
+			wrapper.getTradeBooks(pairsToCheck);
 			DepthTradeRouteEvaluator dp = new DepthTradeRouteEvaluator(
-					altWrapper);
+					wrapper);
 
 			// check routes with new tradebook and remember best
 
@@ -370,7 +416,7 @@ public class TradeCircle extends Frame implements ActionListener, Runnable {
 		BigDecimal out = eval.evaluate(toCheckRoute, true);
 		BigDecimal divide = out.divide(inAmount, MathContext.DECIMAL32);
 		System.out.println(divide);
-		if (divide.compareTo(new BigDecimal(1.003)) > 0) {
+		if (divide.compareTo(wrapper.getFeeTolerance()) > 0) {
 			System.out.println("Route still profitable");
 			System.out.println(String.format("%.9f --> %.9f", inAmount, out));
 			return true;

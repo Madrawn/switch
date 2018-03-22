@@ -84,14 +84,6 @@ public abstract class ExchangeWrapper implements API {
 		return getTradeBook(p);
 	}
 
-	public TradeBook updateAndGetTradeBook(CurrencyPair pair)
-			throws IOException {
-		TradeBook tmp = new TradeBook(null, null, pair);
-		tradeBooks.remove(tmp);
-
-		return getTradeBook(pair);
-	}
-
 	public Set<CurrencyPair> deadPairs = new HashSet<>();
 
 	public Set<CurrencyPair> cleanDeadPairs() {
@@ -153,15 +145,21 @@ public abstract class ExchangeWrapper implements API {
 		return this.openOrders;
 	}
 
+	public TradeBook updateAndGetTradeBook(CurrencyPair pair)
+			throws IOException {
+		TradeBook tmp = new TradeBook(null, null, pair);
+		tradeBooks.remove(tmp);
+	
+		return getTradeBook(pair);
+	}
+
 	public TradeBook updateAndGetTradeBook(Currency from, Currency to)
 			throws Exception {
 		CurrencyPair p = getAccordingPair(from, to);
 
-		TradeBook tmp = new TradeBook(null, null, p);
-		System.out.println("Deleting TradeBook of " + p);
-		tradeBooks.remove(tmp);
+		
 
-		return getTradeBook(p);
+		return updateAndGetTradeBook(p);
 	}
 
 	/**
@@ -190,5 +188,7 @@ public abstract class ExchangeWrapper implements API {
 		}
 		return p;
 	}
+
+	public abstract BigDecimal getFeeTolerance();	
 
 }

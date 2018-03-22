@@ -15,7 +15,7 @@ public class Currency {
 
     @objid ("c73f75ac-b848-4955-9ab0-456ec0fc1417")
     public Currency(final String longName) {
-        this.token = longName;
+        this.token = longName.toLowerCase();
     }
 
     @objid ("aff1685b-16d1-43e3-84ac-4f6bc899a2c6")

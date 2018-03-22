@@ -130,7 +130,7 @@ public class TradeRouteGenerator {
 																		.getList());
 														try {
 															if (tmpTradeRoutes
-																	.size() % 1000 == 0) {
+																	.size() % 1000 == 0 && tmpTradeRoutes.size()>0) {
 
 																System.out
 																		.println(String
@@ -145,7 +145,7 @@ public class TradeRouteGenerator {
 															if (tmpTradeRoutes
 																	.size() == 2495371) {
 																System.out
-																		.println("Why");
+																		.println("Why wat");
 															}
 															tr.addStep(tradeStep);
 														} catch (Exception e) {
@@ -238,7 +238,7 @@ public class TradeRouteGenerator {
 		 * .getTailCurrency(), start), 0)); } catch (Exception e) { // TODO
 		 * Auto-generated catch block e.printStackTrace(); } }
 		 */
-		System.out.println("Why");
+		//System.out.println("Why");
 
 	}
 

@@ -29,6 +29,7 @@ public class BookKeeperThread implements Runnable {
 	private Vector<ActionListener> listeners = new Vector<>();
 	private Set<CurrencyPair> badPairs = new HashSet<>();
 	private BigDecimal inAmount;
+	private boolean firstRun = true;
 
 	public void addListener(ActionListener p) {
 		listeners.addElement(p);
@@ -50,6 +51,15 @@ public class BookKeeperThread implements Runnable {
 				}
 				try {
 					exchange.getTradeBooks(allPairs);
+					if (firstRun) {
+						firstRun = false;
+						try {
+							Thread.sleep(10000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} //give time to fill;
+					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -83,6 +93,7 @@ public class BookKeeperThread implements Runnable {
 								// remove all routes containing the problem
 								// currency
 							}
+							//System.out.println(String.format("%.9f -> %.9f", in, out));
 							if (in.compareTo(out) < 0) {
 								profitRoutes.put(out, route);
 

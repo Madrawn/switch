@@ -58,7 +58,11 @@ public class TradeRoute {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((steps == null) ? 0 : steps.hashCode());
+		int tsteps = 0;
+		for (PricedTradeStep pricedTradeStep : steps) {
+			tsteps += pricedTradeStep.hashCode();
+		}
+		result = prime * result + tsteps;
 		return result;
 	}
 
@@ -74,8 +78,19 @@ public class TradeRoute {
 		if (steps == null) {
 			if (other.steps != null)
 				return false;
-		} else if (!steps.equals(other.steps))
-			return false;
+		} else {
+			for (PricedTradeStep pricedTradeStep : steps) {
+				int index = steps.indexOf(pricedTradeStep);
+				if (index > other.steps.size() - 1) {
+					return false;
+				} else {
+					PricedTradeStep pricedTradeStep2 = other.steps.get(index);
+					if (!pricedTradeStep.equals(pricedTradeStep2)) {
+					return false;
+					}
+				}
+			}
+		}
 		return true;
 	}
 
@@ -107,15 +122,14 @@ public class TradeRoute {
 		}
 		return false;
 	}
-	
+
 	public Collection<? extends CurrencyPair> getCurrencyPairsContained() {
 		Set<CurrencyPair> result = new HashSet<>();
-		
+
 		for (PricedTradeStep e : steps) {
 			result.add(e.relevantPair);
 		}
 		return result;
 	}
-
 
 }
