@@ -71,10 +71,10 @@ public class Yobit extends ExchangeWrapper {
 			//System.out.println("Return old TB");
 			return tradeBooks.get(tradeBooks.indexOf(testBook));
 		}
-		System.out.println("Getting new TB");
 
 		String targetString = pair.getSecondCurrency().getToken() + "_"
 				+ pair.getBaseCurrency().getToken();
+		System.out.println("Getting new TB for "+ targetString + Thread.currentThread());
 		String completeURL = this.apiUrl + depthCmd + targetString;
 
 		URLConnection openConnection = connect(completeURL);
@@ -152,7 +152,7 @@ public class Yobit extends ExchangeWrapper {
 	protected URLConnection setupConnection(String completeURL)
 			throws MalformedURLException, IOException {
 		try {
-			Thread.sleep(700);
+			Thread.sleep(1000);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

@@ -20,6 +20,8 @@ public class TradeBook {
     @objid ("4b1e540d-c974-45fa-90f8-e9408e913904")
     private CurrencyPair currencyPair;
 
+    
+    
     public CurrencyPair getCurrencyPair() {
 		return currencyPair;
 	}

@@ -1,5 +1,7 @@
 package daniel.switchtrading.core;
 
+import java.math.BigDecimal;
+
 import com.modeliosoft.modelio.javadesigner.annotations.objid;
 
 @objid ("def02669-dbd9-4d31-9a51-44f8e1cc777a")
@@ -10,6 +12,9 @@ public class CurrencyPair {
     @objid ("b8569fd2-9148-4dfc-b67e-d64539448198")
     private Currency secondCurrency;
 
+	private BigDecimal minOrderSize = BigDecimal.ONE.negate();
+
+    
     @objid ("c406a810-fe86-4441-9aa1-f10a2439fdb3")
     public CurrencyPair(Currency frontCurrency, Currency baseCurrency2) {
         this.secondCurrency = frontCurrency;
@@ -47,5 +52,14 @@ public class CurrencyPair {
     public int hashCode() {
     	return 13 * baseCurrency.hashCode() * 7 + secondCurrency.hashCode();
     }
+
+	public void setMinOrderSize(BigDecimal minOrderSize) {
+		this.minOrderSize = minOrderSize;
+		
+	}
+	public BigDecimal getMinOrderSize() {
+		return this.minOrderSize;
+		
+	}
 
 }

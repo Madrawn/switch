@@ -32,7 +32,7 @@ public class UserBalance {
 	public Wallet getWallet(Currency from) {
 		for (Wallet wallet : wallet) {
 			
-			if(wallet.currency.equals(from)|| wallet.typeOfWallet == TypeOfWallet.EXCHANGE)
+			if(wallet.currency.equals(from)&& wallet.typeOfWallet == TypeOfWallet.EXCHANGE)
 				return wallet;
 		}
 		return null;

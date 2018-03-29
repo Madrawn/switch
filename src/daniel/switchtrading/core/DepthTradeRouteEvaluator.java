@@ -2,6 +2,7 @@ package daniel.switchtrading.core;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.text.Bidi;
 import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -36,15 +37,16 @@ public class DepthTradeRouteEvaluator extends TradeRouteEvaluator {
 					if (tempSet == null) {
 						// we buy so get lowest ask
 						SortedSet<Position> asks = tradeBook.getAsks();
-						if (asks == null) {
+						if (asks == null||asks.isEmpty()) {
 							System.out.println("Asks seem to be missing");
 							throw exception;
 						}
-						synchronized (asks) {
 							tempSet = Collections
 									.synchronizedSortedSet(new TreeSet<>(asks));
 
-						}
+					}
+					if (tempSet.isEmpty()) {
+						throw exception;
 					}
 					Position pos = tempSet.first();
 					tempSet.remove(pos);
@@ -79,10 +81,11 @@ public class DepthTradeRouteEvaluator extends TradeRouteEvaluator {
 							System.out.println("Bids seem to be missing");
 							throw exception;
 						}
-						synchronized (bids) {
 							tempSet = Collections
 									.synchronizedSortedSet(new TreeSet<>(bids));
-						}
+					}
+					if (tempSet.isEmpty()) {
+						throw exception;
 					}
 					Position pos = tempSet.first();
 					tempSet.remove(pos);
@@ -110,6 +113,22 @@ public class DepthTradeRouteEvaluator extends TradeRouteEvaluator {
 				}
 			}
 		}
-		return step.getOutSum();
+		boolean isBase = step.from.equals(step.relevantPair.getBaseCurrency());
+		
+		
+		BigDecimal outSum = step.getOutSum();
+		if (outSum.compareTo(BigDecimal.ZERO) == 0) {
+			//TODO: this is reaaaaally weird that it works
+			outSum = step.getOutSum();
+		}
+		
+		if (isBase && (outSum.compareTo(step.relevantPair.getMinOrderSize()) < 0)) {
+			return BigDecimal.ZERO;
+		} else if (!isBase && step.inAmount.compareTo(step.relevantPair.getMinOrderSize()) < 0) {
+			return BigDecimal.ZERO;
+		
+			
+		}
+		return outSum;
 	}
 }

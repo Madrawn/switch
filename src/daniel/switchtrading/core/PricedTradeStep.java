@@ -6,7 +6,7 @@ import java.util.List;
 
 public class PricedTradeStep extends TradeStep {
 
-	private BigDecimal inAmount;
+	public BigDecimal inAmount;
 	
 	private List<Trade> trades = new ArrayList<>();
 

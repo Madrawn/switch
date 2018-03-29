@@ -205,7 +205,7 @@ public class TradeRouteGenerator {
 								try {
 									CurrencyPair relevantPair = new CurrencyPair(
 											tradeRoute.getTailCurrency(), start);
-
+									
 									if (!availablePairs.contains(relevantPair)) {
 										relevantPair = new CurrencyPair(start,
 												tradeRoute.getTailCurrency());
@@ -215,6 +215,12 @@ public class TradeRouteGenerator {
 													tradeRoute
 															.getTailCurrency(),
 													start);
+										}
+									}
+									//we should get the minOrdersize
+									for (CurrencyPair currencyPair : availablePairs) {
+										if (relevantPair.equals(currencyPair)) {
+											relevantPair = currencyPair;
 										}
 									}
 									tradeRoute.addStep(new PricedTradeStep(

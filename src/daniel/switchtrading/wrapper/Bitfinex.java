@@ -21,6 +21,8 @@ import java.util.function.BiConsumer;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
 import javax.json.JsonValue;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
@@ -34,6 +36,7 @@ import com.github.jnidzwetzki.bitfinex.v2.entity.OrderBookPrecision;
 import com.github.jnidzwetzki.bitfinex.v2.entity.OrderbookConfiguration;
 import com.github.jnidzwetzki.bitfinex.v2.entity.OrderbookEntry;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
+import com.github.jnidzwetzki.bitfinex.v2.manager.OrderManager;
 import com.github.jnidzwetzki.bitfinex.v2.manager.OrderbookManager;
 
 import daniel.switchtrading.core.Currency;
@@ -60,6 +63,7 @@ public class Bitfinex extends ExchangeWrapper {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		setupAuth();
 
 	}
 
@@ -89,7 +93,11 @@ public class Bitfinex extends ExchangeWrapper {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("AUTH: " + bitfinexApiBroker.isAuthenticated());
+		boolean authenticated = bitfinexApiBroker.isAuthenticated();
+		if (!authenticated) {
+			System.exit(-1);
+		}
+		System.out.println("AUTH: " + authenticated);
 
 	}
 
@@ -109,9 +117,10 @@ public class Bitfinex extends ExchangeWrapper {
 			for (JsonValue jsonValue : pairs) {
 
 				// System.out.println(textPair);
-				String pairString = jsonValue.asJsonObject().getString("pair");
+				JsonObject asJsonObject = jsonValue.asJsonObject();
+				String pairString = asJsonObject.getString("pair");
 				if (pairString.contains("edr2")
-						|| pairString.contains("rocket")) {
+						|| pairString.contains("rocket")|| pairString.contains("eur")) {
 
 				} else {
 					String front = pairString.substring(0, 3), base = pairString
@@ -124,6 +133,9 @@ public class Bitfinex extends ExchangeWrapper {
 
 					CurrencyPair pair = new CurrencyPair(frontCurrency,
 							baseCurrency);
+					String jsonNumber = asJsonObject.getString("minimum_order_size");
+					BigDecimal minOrderSize = new BigDecimal(jsonNumber);
+					pair.setMinOrderSize(minOrderSize);
 					if (pair.toString().equals("rur_btc")) {
 						System.out.println("Fucking bullshit");
 					} else {
@@ -147,7 +159,9 @@ public class Bitfinex extends ExchangeWrapper {
 
 	@Override
 	public UserBalance getUserBalance() {
+		//setupAuth();
 		if (this.userBalance == null) {
+			
 			this.userBalance = new UserBalance();
 		}
 
@@ -239,24 +253,28 @@ public class Bitfinex extends ExchangeWrapper {
 
 			final BiConsumer<OrderbookConfiguration, OrderbookEntry> callback = (
 					orderbookConfig, entry) -> {
-				// System.out.format("Got entry (%s) for orderbook (%s)\n",
-				// entry,
-				// orderbookConfig);
-				boolean isBid = entry.getAmount() > 0;
-				SortedSet<Position> toUpdate = isBid ? testBook.getBids()
-						: testBook.getAsks();
-				BigDecimal pricePoint = new BigDecimal(entry.getPrice());
-				if (entry.getCount() == 0) {
-					// we need to delete a position
+				synchronized (testBook) {
+					// System.out.format("Got entry (%s) for orderbook (%s)\n",
+					// entry,
+					// orderbookConfig);
+					boolean isBid = entry.getAmount() > 0;
+					SortedSet<Position> toUpdate = isBid ? testBook.getBids()
+							: testBook.getAsks();
+					BigDecimal pricePoint = new BigDecimal(entry.getPrice());
+					if (entry.getCount() == 0) {
+						// we need to delete a position
 
-					Position deleteThis = new Position(BigDecimal.ZERO,
-							pricePoint, isBid);
-					toUpdate.remove(deleteThis);
-				} else {
-					// we need to add a position
-					BigDecimal size = new BigDecimal(Math.abs(entry.getAmount()));
-					Position insertThis = new Position(size, pricePoint, isBid);
-					toUpdate.add(insertThis);
+						Position deleteThis = new Position(BigDecimal.ZERO,
+								pricePoint, isBid);
+						toUpdate.remove(deleteThis);
+					} else {
+						// we need to add a position
+						BigDecimal size = new BigDecimal(Math.abs(entry
+								.getAmount()));
+						Position insertThis = new Position(size, pricePoint,
+								isBid);
+						toUpdate.add(insertThis);
+					}
 				}
 
 			};
@@ -294,26 +312,47 @@ public class Bitfinex extends ExchangeWrapper {
 		BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString("t"
 				+ pair.toString().replaceAll("_", ""));
 		//if we go from the base we're buying
+		System.out.println("We are doing a Trade");
+		
 		if (from.equals(pair.getBaseCurrency())) {
+			System.out.println("From the base");
 			
 		} else {
 			//we're selling
+			System.out.println("To the base");
 			amount = amount.negate();
 		}
 		//the amount has to be the non-base currency. so if it costs 0.5 btc and we want to sell 1 BTC worth we need to sell 1 / 0.5 -> 2
 		//but out amount is always in the from currency
 		//so
+		System.out.println(String.format("We're trading with %.4f %s", amount, from));
 		if (from.equals(pair.getBaseCurrency())) {
+			//we could let bitfinex calc this or at least update the price
+			System.out.println("We update our price from " + priceThreshold + " " + pair);
+			try {
+				priceThreshold = getTradeBook(pair).getLowestAsk().getPrice();
+				System.out.println("To " + priceThreshold);
+				System.out.println("highest bid: " +getTradeBook(pair).getHighestBid().getPrice() );
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println(String.format("We also need to change %.4f %s to %s", amount, from, to));
 			amount = amount.divide(priceThreshold, MathContext.DECIMAL32);
+			System.out.println(String.format("Resulting in %.4f %s", amount, to));
 		}
-		
+		//TODO: fix by trading less?
+		System.out.println(String.format("also applying a 0.5 percent discount: %.4f", amount));
+		amount = amount.multiply(new BigDecimal(0.995));
 		
 		final BitfinexOrder order = BitfinexOrderBuilder
 				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount.doubleValue())
 				.build();
 				
 		try {
-			bitfinexApiBroker.getOrderManager().placeOrder(order);
+			System.out.println(String.format("The order placed is: %.4f %s", amount, to));
+			OrderManager orderManager = bitfinexApiBroker.getOrderManager();
+			orderManager.placeOrder(order);
 		} catch (APIException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -397,7 +436,7 @@ public class Bitfinex extends ExchangeWrapper {
 	@Override
 	public BigDecimal getFeeTolerance() {
 		// TODO Auto-generated method stub
-		return new BigDecimal(1.000);
+		return new BigDecimal(1.01);
 	}
 
 }

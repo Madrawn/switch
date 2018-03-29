@@ -11,7 +11,7 @@ import com.modeliosoft.modelio.javadesigner.annotations.objid;
 @objid("f11ce54f-7d56-4f8c-a9f3-e6a8df692444")
 public class TradeRoute {
 
-	private List<PricedTradeStep> steps = new LinkedList<>();
+	private LinkedList<PricedTradeStep> steps = new LinkedList<>();
 
 	@objid("2252be15-85f5-4152-93e0-9fbb42c1bb86")
 	public TradeRoute(PricedTradeStep in) {
@@ -94,7 +94,7 @@ public class TradeRoute {
 		return true;
 	}
 
-	public List<PricedTradeStep> getList() {
+	public LinkedList<PricedTradeStep> getList() {
 		// TODO Auto-generated method stub
 		return steps;
 	}
